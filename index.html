@@ -5,11 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MoneyFlow - Quản lý Chi tiêu Đám mây</title>
   
-  <meta name="theme-color" content="#11141a">
+  <!-- Cấu hình PWA Native App cho iOS & Android -->
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MoneyFlow">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2382/2382461.png">
-  <link rel="manifest" id="manifestPlaceholder">
+  
+  <!-- Web App Manifest (Dạng Data URI để không cần tạo thêm file manifest.json riêng) -->
+  <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22MoneyFlow%22%2C%22short_name%22%3A%22MoneyFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F2382%2F2382461.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -55,7 +60,7 @@
     body { background-color: var(--bg-primary); color: var(--text-main); display: flex; min-height: 100vh; padding-bottom: calc(80px + var(--safe-bottom)); }
     @media (min-width: 768px) { body { padding-bottom: 0; } }
 
-    /* Màn hình chờ nền đen 100% màn hình, video thu gọn ~70% ở giữa */
+    /* Màn hình chờ 100% nền đen, video 70% có âm thanh */
     #splashScreen {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -226,7 +231,7 @@
   </style>
 </head>
 <body>
-  <!-- Màn hình chờ: Thử phát tự động có tiếng, tự fallback nếu bị trình duyệt chặn -->
+  <!-- Màn hình chờ Splash -->
   <div id="splashScreen">
     <video id="splashVideo" class="splash-video" autoplay playsinline>
       <source src="Card-Flip.mp4" type="video/mp4">
@@ -719,7 +724,7 @@
 
       await renderApp();
 
-      // Xử lý tự động ẩn Splash Video và tự động fallback an toàn nếu trình duyệt chặn phát tiếng
+      // Xử lý tự động phát âm thanh ở chế độ PWA (Standalone Mode)
       const splash = document.getElementById("splashScreen");
       const splashVideo = document.getElementById("splashVideo");
 
@@ -731,10 +736,11 @@
       };
 
       if (splashVideo) {
+        splashVideo.muted = false; // Luôn thử mở tiếng
         let playPromise = splashVideo.play();
         if (playPromise !== undefined) {
           playPromise.catch(error => {
-            // Nếu trình duyệt chặn phát có tiếng, tự động bật muted để video chạy mượt mà không bị lỗi
+            // Trường hợp chạy trực tiếp trên trình duyệt thường mà bị chặn, fallback về muted
             splashVideo.muted = true;
             splashVideo.play();
           });
