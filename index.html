@@ -111,11 +111,11 @@
     .chart-wrapper { position: relative; width: 100%; height: 220px; }
     .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
 
-    /* Gợi ý số tiền nhanh dạng chip */
+    /* Thanh gợi ý thông minh động */
     .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
     .quick-chip { background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--accent-mint); padding: 0.3rem 0.55rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
-    /* Modal chung tối ưu cuộn trên điện thoại */
+    /* Modal chung tối ưu cuộn */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; padding: 1rem; overflow-y: auto; }
     .modal.open { display: flex; }
     .modal-content { background: var(--bg-card); padding: 1.25rem; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); max-height: 90vh; overflow-y: auto; }
@@ -265,14 +265,14 @@
         </div>
         <div class="form-group">
           <label>Số tiền (VNĐ)</label>
-          <input type="text" id="transAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="formatInputMoney(this)">
-          <div class="quick-amounts">
-            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 50000)">+50K</button>
-            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 100000)">+100K</button>
-            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 500000)">+500K</button>
-            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 1000000)">+1Tr</button>
-            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 2000000)">+2Tr</button>
-            <button type="button" class="quick-chip" onclick="setAmount('transAmount', 0)">Xóa</button>
+          <input type="text" id="transAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="handleMoneyInput(this, 'transChips')">
+          <div id="transChips" class="quick-amounts">
+            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 1000)">1K</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 10000)">10K</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 50000)">50K</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 100000)">100K</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 500000)">500K</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 1000000)">1 Tr</button>
           </div>
         </div>
         <div class="form-group"><label>Danh mục</label><select id="transCategory" class="form-control" required></select></div>
@@ -301,13 +301,13 @@
         </div>
         <div class="form-group">
           <label>Hạn mức tối đa (VNĐ)</label>
-          <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="formatInputMoney(this)">
-          <div class="quick-amounts">
-            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 500000)">+500K</button>
-            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 1000000)">+1Tr</button>
-            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 2000000)">+2Tr</button>
-            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 5000000)">+5Tr</button>
-            <button type="button" class="quick-chip" onclick="setAmount('budgetLimitAmount', 0)">Xóa</button>
+          <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="handleMoneyInput(this, 'budgetChips')">
+          <div id="budgetChips" class="quick-amounts">
+            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 500000)">500K</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 1000000)">1 Tr</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 2000000)">2 Tr</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 5000000)">5 Tr</button>
+            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 10000000)">10 Tr</button>
           </div>
         </div>
         <div class="modal-footer">
@@ -384,26 +384,49 @@
       if (!cats.includes(category)) cats.push(category);
     }
 
-    // Tự động định dạng dấu phẩy tiền tệ khi gõ
-    window.formatInputMoney = function(input) {
-      let val = input.value.replace(/\D/g, '');
-      if (val) {
-        input.value = Number(val).toLocaleString('vi-VN');
-      } else {
+    // Xử lý thông minh: Khi gõ số, các chip gợi ý tự động nhân lên theo mệnh giá
+    window.handleMoneyInput = function(input, chipsContainerId) {
+      let rawVal = input.value.replace(/\D/g, '');
+      const chipsContainer = document.getElementById(chipsContainerId);
+
+      if (!rawVal) {
         input.value = '';
+        chipsContainer.innerHTML = `
+          <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 1000)">1K</button>
+          <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 10000)">10K</button>
+          <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 50000)">50K</button>
+          <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 100000)">100K</button>
+          <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 500000)">500K</button>
+          <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 1000000)">1 Tr</button>
+        `;
+        return;
       }
+
+      let num = parseInt(rawVal, 10);
+      input.value = num.toLocaleString('vi-VN');
+
+      // Tạo gợi ý nhân theo số đang gõ
+      chipsContainer.innerHTML = `
+        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1)">${num.toLocaleString('vi-VN')} đ</button>
+        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1000)">${(num * 1000).toLocaleString('vi-VN')} đ</button>
+        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 10000)">${(num * 10000).toLocaleString('vi-VN')} đ</button>
+        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 100000)">${(num * 100000).toLocaleString('vi-VN')} đ</button>
+        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1000000)">${(num * 1000000).toLocaleString('vi-VN')} đ</button>
+        <button type="button" class="quick-chip" onclick="setDirectAmount('${input.id}', '${chipsContainerId}', 0)" style="color:var(--danger-text)">Xóa</button>
+      `;
     }
 
-    window.addAmount = function(elementId, value) {
-      const input = document.getElementById(elementId);
-      let current = parseInt(input.value.replace(/\D/g, '')) || 0;
-      let total = current + value;
+    window.applyMultiplier = function(inputId, chipsId, baseNum, multiplier) {
+      const input = document.getElementById(inputId);
+      const total = baseNum * multiplier;
       input.value = total.toLocaleString('vi-VN');
+      handleMoneyInput(input, chipsId);
     }
 
-    window.setAmount = function(elementId, value) {
-      const input = document.getElementById(elementId);
+    window.setDirectAmount = function(inputId, chipsId, value) {
+      const input = document.getElementById(inputId);
       input.value = value === 0 ? '' : value.toLocaleString('vi-VN');
+      handleMoneyInput(input, chipsId);
     }
 
     const MoneyFlowStorage = (() => {
@@ -694,6 +717,7 @@
         populateCategories("expense");
         populateAccounts();
       }
+      handleMoneyInput(document.getElementById("transAmount"), 'transChips');
       document.getElementById("transactionModal").classList.add("open");
     }
 
