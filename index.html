@@ -112,19 +112,18 @@
     .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
 
     /* Gợi ý số tiền nhanh dạng chip */
-    .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
-    .quick-chip { background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.35rem 0.65rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .quick-chip:hover, .quick-chip:active { background: var(--accent-mint); color: #0b1517; border-color: var(--accent-mint); }
+    .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    .quick-chip { background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--accent-mint); padding: 0.3rem 0.55rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
-    /* Modal chung */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; padding: 1rem; }
+    /* Modal chung tối ưu cuộn trên điện thoại */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; padding: 1rem; overflow-y: auto; }
     .modal.open { display: flex; }
-    .modal-content { background: var(--bg-card); padding: 1.5rem; border-radius: 20px; width: 100%; max-width: 420px; border: 1px solid var(--border-color); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-content { background: var(--bg-card); padding: 1.25rem; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
     .close-btn { background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; }
-    .form-group { margin-bottom: 1.1rem; }
-    .form-group label { display: block; font-size: 0.8rem; margin-bottom: 0.35rem; color: var(--text-muted); }
-    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
+    .form-group { margin-bottom: 0.9rem; }
+    .form-group label { display: block; font-size: 0.8rem; margin-bottom: 0.3rem; color: var(--text-muted); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
 
     .auth-tabs { display: flex; background: var(--bg-primary); border-radius: 10px; padding: 4px; margin-bottom: 1.25rem; }
     .auth-tab { flex: 1; text-align: center; padding: 0.5rem; background: none; border: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
@@ -266,11 +265,10 @@
         </div>
         <div class="form-group">
           <label>Số tiền (VNĐ)</label>
-          <input type="text" id="transAmount" class="form-control" inputmode="numeric" placeholder="0" required>
+          <input type="text" id="transAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="formatInputMoney(this)">
           <div class="quick-amounts">
             <button type="button" class="quick-chip" onclick="addAmount('transAmount', 50000)">+50K</button>
             <button type="button" class="quick-chip" onclick="addAmount('transAmount', 100000)">+100K</button>
-            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 200000)">+200K</button>
             <button type="button" class="quick-chip" onclick="addAmount('transAmount', 500000)">+500K</button>
             <button type="button" class="quick-chip" onclick="addAmount('transAmount', 1000000)">+1Tr</button>
             <button type="button" class="quick-chip" onclick="addAmount('transAmount', 2000000)">+2Tr</button>
@@ -299,11 +297,11 @@
       <form id="budgetForm">
         <div class="form-group">
           <label>Tên danh mục chi tiêu</label>
-          <input type="text" id="budgetCategoryName" class="form-control" placeholder="Ví dụ: Du lịch, Học tập..." required>
+          <input type="text" id="budgetCategoryName" class="form-control" autocomplete="off" placeholder="Ví dụ: Du lịch, Học tập..." required>
         </div>
         <div class="form-group">
           <label>Hạn mức tối đa (VNĐ)</label>
-          <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" placeholder="0" required>
+          <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="formatInputMoney(this)">
           <div class="quick-amounts">
             <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 500000)">+500K</button>
             <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 1000000)">+1Tr</button>
@@ -359,7 +357,6 @@
   </div>
 
   <script>
-    // ================= CONFIG SUPABASE =================
     const SUPABASE_URL = "https://lhnayrmxmedremkxfdwp.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxobmF5cm14bWVkcmVta3hmZHdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MzMwNDYsImV4cCI6MjEwNzIwOTA0Nn0.KTnTpA3ASjO301ogZqwjkFW-g423tUSLBGGE5kL4HUI";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -387,7 +384,16 @@
       if (!cats.includes(category)) cats.push(category);
     }
 
-    // Hàm hỗ trợ tăng số tiền nhanh khi bấm chip gợi ý
+    // Tự động định dạng dấu phẩy tiền tệ khi gõ
+    window.formatInputMoney = function(input) {
+      let val = input.value.replace(/\D/g, '');
+      if (val) {
+        input.value = Number(val).toLocaleString('vi-VN');
+      } else {
+        input.value = '';
+      }
+    }
+
     window.addAmount = function(elementId, value) {
       const input = document.getElementById(elementId);
       let current = parseInt(input.value.replace(/\D/g, '')) || 0;
