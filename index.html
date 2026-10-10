@@ -64,7 +64,6 @@
     .nav-btn svg { width: 20px; height: 20px; fill: currentColor; }
     .nav-btn.active { background: var(--accent-mint-gradient); color: #0b1517; font-weight: 600; }
 
-    /* Bottom Navigation Mobile */
     .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-card); border-top: 1px solid var(--border-color); padding: 0.6rem 0.5rem calc(0.6rem + var(--safe-bottom)); justify-content: space-around; align-items: center; z-index: 1000; height: 72px; }
     @media (max-width: 767px) { .mobile-nav { display: flex; } }
     .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.4rem 1rem; flex: 1; height: 100%; }
@@ -74,7 +73,6 @@
     .main-content { flex: 1; padding: 1rem; max-width: 1400px; margin: 0 auto; width: 100%; padding-top: calc(1.2rem + var(--safe-top)); }
     @media (min-width: 768px) { .main-content { margin-left: 250px; padding: 2.5rem; } }
 
-    /* Top Header nâng cấp UI chuyên nghiệp */
     .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 0.75rem; }
     .top-header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; flex-shrink: 0; }
     
@@ -123,7 +121,6 @@
     .view { display: none; }
     .view.active { display: block; }
 
-    /* Global Time Filter Tinh Tế */
     .global-time-filter { 
       background: var(--bg-card); 
       padding: 0.75rem 1rem; 
@@ -230,7 +227,6 @@
     </aside>
 
     <main class="main-content">
-      <!-- Top Header Đã Nâng Cấp -->
       <header class="top-header">
         <h1 id="pageTitle">Tổng quan</h1>
         <div class="header-actions">
@@ -594,7 +590,7 @@
       input.value = num.toLocaleString('vi-VN');
 
       chipsContainer.innerHTML = `
-        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1)">${num.toLocaleString('vi-VN')} đ</button>
+        <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1)">${num === 0 ? '0' : num.toLocaleString('vi-VN')} đ</button>
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1000)">${(num * 1000).toLocaleString('vi-VN')} đ</button>
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 10000)">${(num * 10000).toLocaleString('vi-VN')} đ</button>
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 100000)">${(num * 100000).toLocaleString('vi-VN')} đ</button>
@@ -606,7 +602,7 @@
     window.applyMultiplier = function(inputId, chipsId, baseNum, multiplier) {
       const input = document.getElementById(inputId);
       const total = baseNum * multiplier;
-      input.value = total.toLocaleString('vi-VN');
+      input.value = total === 0 ? '' : total.toLocaleString('vi-VN');
       handleMoneyInput(input, chipsId);
     }
 
@@ -904,7 +900,7 @@
       document.getElementById("budgetModalTitle").textContent = `Chỉnh sửa: ${catName}`;
       document.getElementById("budgetCategoryName").value = catName;
       document.getElementById("budgetCategoryName").readOnly = true;
-      document.getElementById("budgetLimitAmount").value = Number(currentLimit).toLocaleString('vi-VN');
+      document.getElementById("budgetLimitAmount").value = Number(currentLimit) === 0 ? '' : Number(currentLimit).toLocaleString('vi-VN');
       handleMoneyInput(document.getElementById("budgetLimitAmount"), 'budgetChips');
       document.getElementById("budgetModal").classList.add("open");
     }
@@ -923,7 +919,7 @@
       if (editItem) {
         document.getElementById("modalTitle").textContent = "Sửa giao dịch";
         document.getElementById("transId").value = editItem.id;
-        document.getElementById("transAmount").value = Number(editItem.amount).toLocaleString('vi-VN');
+        document.getElementById("transAmount").value = Number(editItem.amount) === 0 ? '' : Number(editItem.amount).toLocaleString('vi-VN');
         document.getElementById("transDate").value = editItem.date;
         document.getElementById("transDesc").value = editItem.desc || "";
         form.querySelector(`input[name="transType"][value="${editItem.type}"]`).checked = true;
@@ -962,7 +958,7 @@
 
     async function renderApp() {
       const transactions = await MoneyFlowStorage.fetchTransactions();
-      const fmt = num => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+      const fmt = num => num === 0 ? "0 đ" : new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
       const timeMode = document.getElementById("dashTimeMode").value;
       const timeValElem = document.getElementById("dashTimeValue");
@@ -1104,8 +1100,28 @@
           data: {
             labels: labels,
             datasets: [
-              { label: 'Thu nhập', data: dailyIncome, borderColor: '#4ade80', backgroundColor: '#4ade8022', borderWidth: 2, tension: 0.3, fill: true },
-              { label: 'Chi tiêu', data: dailyExpense, borderColor: '#fb7185', backgroundColor: '#fb718522', borderWidth: 2, tension: 0.3, fill: true }
+              { 
+                label: 'Thu nhập', 
+                data: dailyIncome, 
+                borderColor: '#4ade80', 
+                backgroundColor: '#4ade8022', 
+                borderWidth: 2, 
+                tension: 0.3, 
+                fill: true,
+                pointRadius: 0,          /* Ẩn hoàn toàn các chấm mốc mặc định */
+                pointHoverRadius: 5      /* Chỉ hiện chấm tròn khi rê chuột/chạm vào */
+              },
+              { 
+                label: 'Chi tiêu', 
+                data: dailyExpense, 
+                borderColor: '#fb7185', 
+                backgroundColor: '#fb718522', 
+                borderWidth: 2, 
+                tension: 0.3, 
+                fill: true,
+                pointRadius: 0,          /* Ẩn hoàn toàn các chấm mốc mặc định */
+                pointHoverRadius: 5      /* Chỉ hiện chấm tròn khi rê chuột/chạm vào */
+              }
             ]
           },
           options: {
