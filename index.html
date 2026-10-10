@@ -12,8 +12,10 @@
   <meta name="apple-mobile-web-app-title" content="MoneyFlow">
   <link rel="apple-touch-icon" href="moneyCat.jpg">
   
- <!-- Web App Manifest dạng Data URI chuẩn -->
-  <link rel="manifest" href='data:application/manifest+json;utf8,{"name":"MoneyFlow","short_name":"MoneyFlow","start_url":".","display":"standalone","background_color":"#000000","theme_color":"#000000","icons":[{"src":"moneyCat.png","sizes":"512x512","type":"image/png"}]}'> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Web App Manifest dạng Data URI chuẩn được mã hóa URL để iOS/Android nhận diện chế độ Standalone ẩn thanh địa chỉ -->
+  <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22MoneyFlow%22%2C%22short_name%22%3A%22MoneyFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22moneyCat.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -89,7 +91,6 @@
     .nav-btn svg { width: 22px; height: 22px; min-width: 22px; fill: currentColor; }
     .nav-btn.active { background: var(--accent-mint-gradient); color: #0b1517; font-weight: 600; }
 
-    /* Fix lỗi icon bị thu nhỏ bằng cách set cứng kích thước SVG */
     .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-card); border-top: 1px solid var(--border-color); padding: 0.5rem 0.5rem calc(0.5rem + var(--safe-bottom)); justify-content: space-around; align-items: center; z-index: 1000; height: 75px; }
     @media (max-width: 767px) { .mobile-nav { display: flex; } }
     .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; flex: 1; height: 100%; }
@@ -722,7 +723,7 @@
 
       await renderApp();
 
-      // CƠ CHẾ XỬ LÝ SPLASH VIDEO HOÀN CHỈNH (Khắc phục lỗi không lặp lại ở các lần mở app sau)
+      // CƠ CHẾ XỬ LÝ SPLASH VIDEO HOÀN CHỈNH
       const splash = document.getElementById("splashScreen");
       const splashVideo = document.getElementById("splashVideo");
 
@@ -734,7 +735,6 @@
       };
 
       if (splashVideo) {
-        // Reset video về đầu để luôn chạy mượt mà ở mọi lần mở app từ PWA cache
         splashVideo.currentTime = 0;
         splashVideo.muted = false; 
 
@@ -743,15 +743,12 @@
           playPromise.then(() => {
             // Phát thành công có âm thanh
           }).catch(error => {
-            // Nếu trình duyệt di động chặn tiếng, tự động chuyển muted để video vẫn chạy mượt
             splashVideo.muted = true;
             splashVideo.play();
           });
         }
 
         splashVideo.onended = hideSplash;
-        
-        // Dự phòng an toàn tuyệt đối sau 4.5 giây
         setTimeout(hideSplash, 4500);
       } else {
         setTimeout(hideSplash, 2000);
