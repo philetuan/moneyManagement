@@ -344,3 +344,13 @@ body {
   gap: 0.75rem;
   margin-top: 1.5rem;
 }
+
+/* Cuộn danh sách giao dịch trong kỳ và ẩn thanh scrollbar */
+#recentList {
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+}
+#recentList::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}

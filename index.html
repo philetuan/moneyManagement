@@ -12,7 +12,6 @@
   <meta name="apple-mobile-web-app-title" content="MoneyFlow">
   <link rel="apple-touch-icon" href="moneyCat.jpg">
   
-  <!-- Web App Manifest dạng Data URI chuẩn được mã hóa URL để iOS/Android nhận diện chế độ Standalone ẩn thanh địa chỉ -->
   <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22MoneyFlow%22%2C%22short_name%22%3A%22MoneyFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23000000%22%2C%22theme_color%22%3A%22%23000000%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22moneyCat.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -59,7 +58,7 @@
     body { background-color: var(--bg-primary); color: var(--text-main); display: flex; min-height: 100vh; padding-bottom: calc(85px + var(--safe-bottom)); }
     @media (min-width: 768px) { body { padding-bottom: 0; } }
 
-    /* Màn hình chờ 100% nền đen, video 70% */
+    /* Màn hình chờ */
     #splashScreen {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -70,16 +69,17 @@
       z-index: 9999;
       transition: opacity 0.5s ease, visibility 0.5s ease;
     }
-    #splashScreen.fade-out {
-      opacity: 0;
-      visibility: hidden;
+    #splashScreen.fade-out { opacity: 0; visibility: hidden; }
+    .splash-video { width: 70%; max-width: 420px; height: auto; border-radius: 20px; object-fit: contain; }
+
+    /* Lấp đầy box và ẩn thanh cuộn */
+    #recentList {
+      max-height: 500px;
+      overflow-y: auto;
+      scrollbar-width: none; /* Firefox */
     }
-    .splash-video {
-      width: 70%;
-      max-width: 420px;
-      height: auto;
-      border-radius: 20px;
-      object-fit: contain;
+    #recentList::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Edge */
     }
 
     .app-container { display: flex; width: 100%; }
@@ -109,34 +109,20 @@
       background: var(--bg-card); 
       border: 1px solid var(--border-color); 
       color: var(--text-main); 
-      width: 44px; 
-      height: 44px; 
-      border-radius: 12px; 
-      cursor: pointer; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      transition: all 0.2s ease;
-      flex-shrink: 0;
+      width: 44px; height: 44px; 
+      border-radius: 12px; cursor: pointer; 
+      display: flex; align-items: center; justify-content: center; 
+      transition: all 0.2s ease; flex-shrink: 0;
     }
     .icon-btn:active { transform: scale(0.95); }
     .icon-btn svg { width: 22px !important; height: 22px !important; min-width: 22px; fill: currentColor; }
 
     .btn-add-trans {
       background: var(--accent-mint-gradient);
-      color: #0b1517;
-      padding: 0 1.2rem;
-      height: 44px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      white-space: nowrap;
-      box-shadow: 0 4px 15px rgba(92, 225, 230, 0.2);
+      color: #0b1517; padding: 0 1.2rem; height: 44px;
+      border-radius: 12px; border: none; font-weight: 700; font-size: 0.9rem;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;
+      white-space: nowrap; box-shadow: 0 4px 15px rgba(92, 225, 230, 0.2);
     }
     .btn-add-trans:active { transform: scale(0.96); }
 
@@ -149,30 +135,16 @@
     .view.active { display: block; }
 
     .global-time-filter { 
-      background: var(--bg-card); 
-      padding: 0.75rem 1rem; 
-      border-radius: 16px; 
-      border: 1px solid var(--border-color); 
-      margin-bottom: 1.25rem; 
-      display: flex; 
-      gap: 0.65rem; 
-      align-items: center; 
-      flex-wrap: wrap; 
+      background: var(--bg-card); padding: 0.75rem 1rem; border-radius: 16px; 
+      border: 1px solid var(--border-color); margin-bottom: 1.25rem; 
+      display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap; 
     }
 
     .form-control { 
-      padding: 0.55rem 0.8rem; 
-      border: 1px solid var(--border-color); 
-      border-radius: 12px; 
-      outline: none; 
-      font-size: 0.85rem; 
-      background-color: var(--bg-primary); 
-      color: var(--text-main); 
+      padding: 0.55rem 0.8rem; border: 1px solid var(--border-color); border-radius: 12px; 
+      outline: none; font-size: 0.85rem; background-color: var(--bg-primary); color: var(--text-main); 
     }
-    
-    @media (max-width: 640px) {
-      .form-control { flex: 1 1 100%; }
-    }
+    @media (max-width: 640px) { .form-control { flex: 1 1 100%; } }
 
     .stats-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin-bottom: 1.25rem; }
     @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -230,11 +202,9 @@
   </style>
 </head>
 <body>
-  <!-- Màn hình chờ Splash -->
   <div id="splashScreen">
     <video id="splashVideo" class="splash-video" playsinline preload="auto">
       <source src="Card-Flip.mp4" type="video/mp4">
-      Trình duyệt của bạn không hỗ trợ phát video.
     </video>
   </div>
 
@@ -275,7 +245,6 @@
         </div>
       </header>
 
-      <!-- Dashboard View -->
       <section id="view-dashboard" class="view active">
         <div class="global-time-filter">
           <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; white-space: nowrap;">Xem theo:</span>
@@ -328,7 +297,6 @@
         </div>
       </section>
 
-      <!-- Transactions View -->
       <section id="view-transactions" class="view">
         <div class="global-time-filter">
           <select id="filterType" class="form-control" style="width: 120px;">
@@ -336,26 +304,21 @@
             <option value="expense">Chi tiêu</option>
             <option value="income">Thu nhập</option>
           </select>
-          
           <select id="filterCategory" class="form-control" style="width: 140px;">
             <option value="all">Tất cả danh mục</option>
           </select>
-          
           <select id="filterTimeMode" class="form-control" style="width: 110px;" onchange="onFilterTimeModeChange()">
             <option value="all">Tất cả</option>
             <option value="day">Ngày</option>
             <option value="month" selected>Tháng</option>
             <option value="year">Năm</option>
           </select>
-
           <div id="filterTimeInputWrapper" style="display: inline-block;"></div>
-
           <button id="btnResetFilter" class="btn btn-secondary">Đặt lại</button>
         </div>
         <div id="allTransactionsList" class="transaction-list"></div>
       </section>
 
-      <!-- Budget View -->
       <section id="view-budget" class="view">
         <div class="card-section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -369,7 +332,6 @@
         </div>
       </section>
 
-      <!-- Settings View -->
       <section id="view-settings" class="view">
         <div class="card-section">
           <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Trạng thái Tài khoản Đám mây</h3>
@@ -379,7 +341,6 @@
       </section>
     </main>
 
-    <!-- Menu Đáy di động -->
     <nav class="mobile-nav">
       <button class="mobile-nav-btn active" data-view="dashboard">
         <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -396,7 +357,6 @@
     </nav>
   </div>
 
-  <!-- Modal Giao dịch -->
   <div id="transactionModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -416,7 +376,6 @@
         </div>
         <div class="form-group"><label>Danh mục</label><select id="transCategory" class="form-control" style="max-width: 100%;" required></select></div>
         <div class="form-group"><label>Tài khoản</label><select id="transAccount" class="form-control" style="max-width: 100%;" required></select></div>
-        
         <div class="form-group">
           <label>Ngày giao dịch</label>
           <input type="date" id="transDate" class="form-control" style="max-width: 100%;" required>
@@ -426,7 +385,6 @@
             <button type="button" class="quick-chip" onclick="setQuickDate('transDate', -2)">Hôm kia</button>
           </div>
         </div>
-
         <div class="form-group"><label>Ghi chú</label><input type="text" id="transDesc" class="form-control" style="max-width: 100%;" placeholder="Ghi chú..."></div>
         <div class="modal-footer">
           <button type="button" id="btnCancelModal" class="btn btn-secondary">Hủy</button>
@@ -436,7 +394,6 @@
     </div>
   </div>
 
-  <!-- Modal Thêm/Chỉnh sửa Ngân sách -->
   <div id="budgetModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -446,14 +403,13 @@
       <form id="budgetForm">
         <div class="form-group">
           <label>Tên danh mục chi tiêu</label>
-          <input type="text" id="budgetCategoryName" class="form-control" style="max-width: 100%;" autocomplete="off" placeholder="Ví dụ: Du lịch, Học tập..." required>
+          <input type="text" id="budgetCategoryName" class="form-control" style="max-width: 100%;" autocomplete="off" placeholder="Ví dụ: Du lịch..." required>
         </div>
         <div class="form-group">
           <label>Hạn mức tối đa (VNĐ)</label>
           <input type="text" id="budgetLimitAmount" class="form-control" style="max-width: 100%;" inputmode="numeric" autocomplete="off" placeholder="0" required oninput="handleMoneyInput(this, 'budgetChips')">
           <div id="budgetChips" class="quick-amounts"></div>
         </div>
-
         <div class="modal-footer">
           <button type="button" id="btnCancelBudgetModal" class="btn btn-secondary">Hủy</button>
           <button type="submit" class="btn btn-primary">Lưu hạn mức</button>
@@ -462,22 +418,18 @@
     </div>
   </div>
 
-  <!-- Modal Đăng nhập / Đăng ký -->
   <div id="authModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
         <h3 style="font-size: 1.1rem;">Tài khoản MoneyFlow Cloud</h3>
         <button id="btnCloseAuth" class="close-btn">✕</button>
       </div>
-
       <div class="auth-tabs">
         <button id="tabLoginBtn" class="auth-tab active" onclick="switchAuthTab('login')">Đăng nhập</button>
         <button id="tabRegisterBtn" class="auth-tab" onclick="switchAuthTab('register')">Đăng ký mới</button>
       </div>
-
       <div id="authErrorBox" class="auth-error"></div>
       <div id="authSuccessBox" class="auth-success"></div>
-
       <form id="authForm">
         <div class="form-group">
           <label>Email</label>
@@ -490,11 +442,9 @@
             <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">Hiện</button>
           </div>
         </div>
-        
         <div id="forgotPasswordContainer" style="margin-bottom: 1rem; text-align: right;">
           <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.75rem; color: var(--accent-mint); text-decoration: none;">Quên mật khẩu?</a>
         </div>
-
         <button type="submit" id="authSubmitBtn" class="btn btn-primary" style="width: 100%;">Đăng nhập</button>
       </form>
     </div>
@@ -532,7 +482,6 @@
       const limits = getSavedLimits();
       delete limits[category];
       localStorage.setItem("mf_budget_limits", JSON.stringify(limits));
-      
       let cats = defaultData.categories.expense;
       defaultData.categories.expense = cats.filter(c => c !== category);
     }
@@ -585,15 +534,8 @@
       }
     }
 
-    window.onDashTimeModeChange = function() {
-      initDashTimeFilter();
-      renderApp();
-    }
-
-    window.onFilterTimeModeChange = function() {
-      initFilterTimeInput();
-      renderApp();
-    }
+    window.onDashTimeModeChange = function() { initDashTimeFilter(); renderApp(); }
+    window.onFilterTimeModeChange = function() { initFilterTimeInput(); renderApp(); }
 
     window.setQuickDate = function(inputId, offsetDays) {
       const d = new Date();
@@ -607,7 +549,6 @@
     window.handleMoneyInput = function(input, chipsContainerId) {
       let rawVal = input.value.replace(/\D/g, '');
       const chipsContainer = document.getElementById(chipsContainerId);
-
       if (!rawVal) {
         input.value = '';
         chipsContainer.innerHTML = `
@@ -620,10 +561,8 @@
         `;
         return;
       }
-
       let num = parseInt(rawVal, 10);
       input.value = num.toLocaleString('vi-VN');
-
       chipsContainer.innerHTML = `
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1)">${num === 0 ? '0' : num.toLocaleString('vi-VN')} đ</button>
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1000)">${(num * 1000).toLocaleString('vi-VN')} đ</button>
@@ -723,10 +662,8 @@
 
       await renderApp();
 
-      // CƠ CHẾ XỬ LÝ SPLASH VIDEO HOÀN CHỈNH
       const splash = document.getElementById("splashScreen");
       const splashVideo = document.getElementById("splashVideo");
-
       const hideSplash = () => {
         if (splash && !splash.classList.contains("fade-out")) {
           splash.classList.add("fade-out");
@@ -737,17 +674,13 @@
       if (splashVideo) {
         splashVideo.currentTime = 0;
         splashVideo.muted = false; 
-
         let playPromise = splashVideo.play();
         if (playPromise !== undefined) {
-          playPromise.then(() => {
-            // Phát thành công có âm thanh
-          }).catch(error => {
+          playPromise.catch(() => {
             splashVideo.muted = true;
             splashVideo.play();
           });
         }
-
         splashVideo.onended = hideSplash;
         setTimeout(hideSplash, 4500);
       } else {
@@ -819,9 +752,7 @@
         errBox.style.display = "block";
         return;
       }
-
       const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-
       if (error) {
         errBox.textContent = error.message;
         errBox.style.display = "block";
@@ -1026,6 +957,16 @@
       const transactions = await MoneyFlowStorage.fetchTransactions();
       const fmt = num => num === 0 ? "0 đ" : new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
+      // Tính số dư lũy kế
+      const sortedAsc = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date));
+      let runningBal = 0;
+      const balanceMap = {};
+      sortedAsc.forEach(t => {
+        if (t.type === 'income') runningBal += t.amount;
+        else runningBal -= t.amount;
+        balanceMap[t.id] = runningBal;
+      });
+
       const timeMode = document.getElementById("dashTimeMode").value;
       const timeValElem = document.getElementById("dashTimeValue");
       const timeVal = timeValElem ? timeValElem.value : "";
@@ -1044,7 +985,7 @@
       document.getElementById("dashIncome").textContent = fmt(income);
       document.getElementById("dashExpense").textContent = fmt(expense);
 
-      document.getElementById("recentList").innerHTML = filteredDashTrans.slice(0, 5).map(t => renderTransItem(t, fmt)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không có giao dịch trong khoảng thời gian này</p>';
+      document.getElementById("recentList").innerHTML = filteredDashTrans.map(t => renderTransItem(t, fmt, balanceMap)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không có giao dịch trong khoảng thời gian này</p>';
       
       const typeF = document.getElementById("filterType").value;
       const catF = document.getElementById("filterCategory").value;
@@ -1061,7 +1002,7 @@
         return true;
       });
 
-      document.getElementById("allTransactionsList").innerHTML = filteredAll.map(t => renderTransItem(t, fmt, true)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không tìm thấy giao dịch</p>';
+      document.getElementById("allTransactionsList").innerHTML = filteredAll.map(t => renderTransItem(t, fmt, balanceMap)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không tìm thấy giao dịch</p>';
 
       renderBudget(transactions, fmt);
       renderCharts(filteredDashTrans, timeMode, timeVal);
@@ -1098,8 +1039,11 @@
       }).join("") || '<p style="color:var(--text-muted); text-align:center;">Chưa có danh mục ngân sách nào. Bấm "+ Thêm mục" để tạo mới!</p>';
     }
 
-    function renderTransItem(t, fmt, actions = false) {
+    // Hàm renderTransItem hỗ trợ cả nút Sửa (✏️) và Xóa (✕)
+   function renderTransItem(t, fmt, balanceMap = {}) {
       const isInc = t.type === "income";
+      const remainingBalance = balanceMap[t.id] !== undefined ? balanceMap[t.id] : 0;
+
       return `
         <div class="trans-item">
           <div>
@@ -1107,12 +1051,29 @@
             <div style="font-size: 0.75rem; color: var(--text-muted);">${t.date} • ${t.category}</div>
           </div>
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-weight: 700; color: ${isInc ? "var(--accent-green-text)" : "var(--accent-pink-text)"};">${isInc ? "+" : "-"}${fmt(t.amount)}</span>
-            ${actions ? `<button onclick="deleteTrans('${t.id}')" style="border:none; background:none; color:var(--danger-text); cursor:pointer;">✕</button>` : ""}
+            <div style="text-align: right;">
+              <div style="font-weight: 700; color: ${isInc ? "var(--accent-green-text)" : "var(--accent-pink-text)"};">
+                ${isInc ? "+" : "-"}${fmt(t.amount)}
+              </div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+                Số dư: ${fmt(remainingBalance)}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.2rem; margin-left: 0.2rem;">
+              <button onclick="editTrans('${t.id}')" class="btn-icon" title="Sửa" style="color: var(--text-muted); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              </button>
+              <button onclick="deleteTrans('${t.id}')" class="btn-icon" title="Xóa" style="color: var(--danger-text); display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px;">✕</button>
+            </div>
           </div>
         </div>
       `;
     }
+
+    window.editTrans = function(id) {
+      const item = transactionsCache.find(t => t.id === id);
+      if (item) openModal(item);
+    };
 
     window.deleteTrans = async function(id) {
       if (confirm("Xóa giao dịch này?")) {
@@ -1166,28 +1127,8 @@
           data: {
             labels: labels,
             datasets: [
-              { 
-                label: 'Thu nhập', 
-                data: dailyIncome, 
-                borderColor: '#4ade80', 
-                backgroundColor: '#4ade8022', 
-                borderWidth: 2, 
-                tension: 0.3, 
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 5
-              },
-              { 
-                label: 'Chi tiêu', 
-                data: dailyExpense, 
-                borderColor: '#fb7185', 
-                backgroundColor: '#fb718522', 
-                borderWidth: 2, 
-                tension: 0.3, 
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 5
-              }
+              { label: 'Thu nhập', data: dailyIncome, borderColor: '#4ade80', backgroundColor: '#4ade8022', borderWidth: 2, tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 5 },
+              { label: 'Chi tiêu', data: dailyExpense, borderColor: '#fb7185', backgroundColor: '#fb718522', borderWidth: 2, tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 5 }
             ]
           },
           options: {
