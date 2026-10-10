@@ -102,6 +102,9 @@
     .trans-item, .budget-item { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem; background: var(--bg-hover); border-radius: 14px; }
     .budget-item { flex-direction: column; align-items: stretch; gap: 0.5rem; }
     .budget-item-top { display: flex; justify-content: space-between; align-items: center; }
+    .budget-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.85rem; padding: 2px 6px; border-radius: 6px; }
+    .btn-icon:hover { background: var(--border-color); color: var(--text-main); }
     
     .progress-bar-bg { width: 100%; background: var(--progress-bg); height: 8px; border-radius: 6px; overflow: hidden; }
     .progress-bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s ease; }
@@ -158,7 +161,6 @@
 
       <!-- Dashboard View -->
       <section id="view-dashboard" class="view active">
-        <!-- Bộ lọc thời gian tổng quan thông minh -->
         <div class="global-time-filter">
           <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Xem theo:</span>
           <select id="dashTimeMode" class="form-control" style="width: 110px;" onchange="onDashTimeModeChange()">
@@ -290,11 +292,11 @@
     </div>
   </div>
 
-  <!-- Modal Ngân sách -->
+  <!-- Modal Thêm/Chỉnh sửa Ngân sách -->
   <div id="budgetModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-size: 1.1rem;">Hạn mức Ngân sách</h3>
+        <h3 id="budgetModalTitle" style="font-size: 1.1rem;">Hạn mức Ngân sách</h3>
         <button id="btnCloseBudgetModal" class="close-btn">✕</button>
       </div>
       <form id="budgetForm">
@@ -306,11 +308,6 @@
           <label>Hạn mức tối đa (VNĐ)</label>
           <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="handleMoneyInput(this, 'budgetChips')">
           <div id="budgetChips" class="quick-amounts"></div>
-        </div>
-        
-        <div class="form-group">
-          <label>Áp dụng cho Tháng</label>
-          <input type="month" id="budgetMonth" class="form-control" required>
         </div>
 
         <div class="modal-footer">
@@ -387,7 +384,15 @@
       if (!cats.includes(category)) cats.push(category);
     }
 
-    // Xử lý chuyển đổi giao diện bộ lọc thời gian ở Tổng quan
+    function deleteLimitCategory(category) {
+      const limits = getSavedLimits();
+      delete limits[category];
+      localStorage.setItem("mf_budget_limits", JSON.stringify(limits));
+      
+      let cats = defaultData.categories.expense;
+      defaultData.categories.expense = cats.filter(c => c !== category);
+    }
+
     function initDashTimeFilter() {
       const wrapper = document.getElementById("dashTimeInputWrapper");
       const mode = document.getElementById("dashTimeMode").value;
@@ -717,9 +722,9 @@
       const btnAddBudget = document.getElementById("btnAddBudgetCategory");
       if (btnAddBudget) {
         btnAddBudget.addEventListener("click", () => {
+          document.getElementById("budgetModalTitle").textContent = "Thêm danh mục Ngân sách";
           document.getElementById("budgetForm").reset();
-          const now = new Date();
-          document.getElementById("budgetMonth").value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          document.getElementById("budgetCategoryName").readOnly = false;
           handleMoneyInput(document.getElementById("budgetLimitAmount"), 'budgetChips');
           document.getElementById("budgetModal").classList.add("open");
         });
@@ -736,9 +741,27 @@
         if (name && amount > 0) {
           saveLimit(name, amount);
           document.getElementById("budgetModal").classList.remove("open");
+          setupFilters();
           renderApp();
         }
       });
+    }
+
+    window.editBudgetCategory = function(catName, currentLimit) {
+      document.getElementById("budgetModalTitle").textContent = `Chỉnh sửa: ${catName}`;
+      document.getElementById("budgetCategoryName").value = catName;
+      document.getElementById("budgetCategoryName").readOnly = true;
+      document.getElementById("budgetLimitAmount").value = Number(currentLimit).toLocaleString('vi-VN');
+      handleMoneyInput(document.getElementById("budgetLimitAmount"), 'budgetChips');
+      document.getElementById("budgetModal").classList.add("open");
+    }
+
+    window.removeBudgetCategory = function(catName) {
+      if (confirm(`Bạn có chắc muốn xóa danh mục ngân sách "${catName}" không?`)) {
+        deleteLimitCategory(catName);
+        setupFilters();
+        renderApp();
+      }
     }
 
     function openModal(editItem = null) {
@@ -778,7 +801,8 @@
 
     function setupFilters() {
       const cats = MoneyFlowStorage.getCategories();
-      const all = Array.from(new Set([...(cats.expense || []), ...(cats.income || [])]));
+      const limits = MoneyFlowStorage.getLimits();
+      const all = Array.from(new Set([...(cats.expense || []), ...(cats.income || []), ...Object.keys(limits)]));
       document.getElementById("filterCategory").innerHTML = '<option value="all">Tất cả danh mục</option>' + all.map(c => `<option value="${c}">${c}</option>`).join("");
       ["filterType", "filterCategory", "filterMonth"].forEach(id => document.getElementById(id).addEventListener("change", renderApp));
     }
@@ -787,7 +811,6 @@
       const transactions = await MoneyFlowStorage.fetchTransactions();
       const fmt = num => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
-      // Lọc dữ liệu hiển thị trên Dashboard theo bộ lọc thời gian tùy chọn
       const timeMode = document.getElementById("dashTimeMode").value;
       const timeValElem = document.getElementById("dashTimeValue");
       const timeVal = timeValElem ? timeValElem.value : "";
@@ -796,7 +819,7 @@
         if (timeMode === 'month' && timeVal) return t.date.startsWith(timeVal);
         if (timeMode === 'day' && timeVal) return t.date === timeVal;
         if (timeMode === 'year' && timeVal) return t.date.startsWith(timeVal);
-        return true; // 'all'
+        return true;
       });
 
       let income = 0, expense = 0;
@@ -841,13 +864,19 @@
         return `
           <div class="budget-item">
             <div class="budget-item-top">
-              <strong style="font-size: 0.9rem;">${cat}</strong>
-              <span style="font-size: 0.75rem; color: var(--text-muted);">${fmt(spent)} / <strong>${fmt(limit)}</strong></span>
+              <div>
+                <strong style="font-size: 0.9rem;">${cat}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">${fmt(spent)} / <strong>${fmt(limit)}</strong></span>
+              </div>
+              <div class="budget-actions">
+                <button class="btn-icon" onclick="editBudgetCategory('${cat}', ${limit})" title="Sửa hạn mức">✏️</button>
+                <button class="btn-icon" onclick="removeBudgetCategory('${cat}')" title="Xóa danh mục" style="color:var(--danger-text)">✕</button>
+              </div>
             </div>
             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${percent}%; background-color: var(--accent-mint);"></div></div>
           </div>
         `;
-      }).join("");
+      }).join("") || '<p style="color:var(--text-muted); text-align:center;">Chưa có danh mục ngân sách nào. Bấm "+ Thêm mục" để tạo mới!</p>';
     }
 
     function renderTransItem(t, fmt, actions = false) {
