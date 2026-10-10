@@ -231,14 +231,13 @@
   </style>
 </head>
 <body>
-  <!-- Màn hình chờ Splash -->
+<!-- Màn hình chờ Splash -->
   <div id="splashScreen">
-    <video id="splashVideo" class="splash-video" autoplay playsinline>
+    <video id="splashVideo" class="splash-video" autoplay muted playsinline preload="auto">
       <source src="Card-Flip.mp4" type="video/mp4">
       Trình duyệt của bạn không hỗ trợ phát video.
     </video>
   </div>
-
   <div class="app-container">
     <aside class="sidebar">
       <div class="logo"><h2>MoneyFlow</h2></div>
@@ -724,7 +723,7 @@
 
       await renderApp();
 
-      // Xử lý tự động phát âm thanh ở chế độ PWA (Standalone Mode)
+      // Xử lý Splash Video tối ưu cho chế độ PWA (Add to Home Screen)
       const splash = document.getElementById("splashScreen");
       const splashVideo = document.getElementById("splashVideo");
 
@@ -736,19 +735,28 @@
       };
 
       if (splashVideo) {
-        splashVideo.muted = false; // Luôn thử mở tiếng
-        let playPromise = splashVideo.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            // Trường hợp chạy trực tiếp trên trình duyệt thường mà bị chặn, fallback về muted
-            splashVideo.muted = true;
-            splashVideo.play();
-          });
-        }
+        // Lắng nghe khi video đã tải đủ dữ liệu để sẵn sàng phát
+        splashVideo.addEventListener('canplay', () => {
+          let playPromise = splashVideo.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              // Sau khi phát thành công, thử mở âm thanh
+              splashVideo.muted = false;
+            }).catch(error => {
+              console.log("Autoplay blocked, keeping muted mode.");
+              splashVideo.muted = true;
+              splashVideo.play();
+            });
+          }
+        });
+
+        // Khi video chạy xong -> Ẩn màn hình chờ
         splashVideo.onended = hideSplash;
-        setTimeout(hideSplash, 4500);
+
+        // Dự phòng tự động ẩn sau 4 giây nếu file video gặp sự cố
+        setTimeout(hideSplash, 4000);
       } else {
-        setTimeout(hideSplash, 3000);
+        setTimeout(hideSplash, 2000);
       }
     });
 
