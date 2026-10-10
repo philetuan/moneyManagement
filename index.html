@@ -111,11 +111,11 @@
     .chart-wrapper { position: relative; width: 100%; height: 220px; }
     .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
 
-    /* Thanh gợi ý thông minh động */
-    .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    /* Thanh gợi ý chip */
+    .quick-amounts, .quick-dates { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
     .quick-chip { background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--accent-mint); padding: 0.3rem 0.55rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
-    /* Modal chung tối ưu cuộn */
+    /* Modal chung */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; padding: 1rem; overflow-y: auto; }
     .modal.open { display: flex; }
     .modal-content { background: var(--bg-card); padding: 1.25rem; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); max-height: 90vh; overflow-y: auto; }
@@ -266,18 +266,22 @@
         <div class="form-group">
           <label>Số tiền (VNĐ)</label>
           <input type="text" id="transAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="handleMoneyInput(this, 'transChips')">
-          <div id="transChips" class="quick-amounts">
-            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 1000)">1K</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 10000)">10K</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 50000)">50K</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 100000)">100K</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 500000)">500K</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('transAmount', 'transChips', 1000000)">1 Tr</button>
-          </div>
+          <div id="transChips" class="quick-amounts"></div>
         </div>
         <div class="form-group"><label>Danh mục</label><select id="transCategory" class="form-control" required></select></div>
         <div class="form-group"><label>Tài khoản</label><select id="transAccount" class="form-control" required></select></div>
-        <div class="form-group"><label>Ngày giao dịch</label><input type="date" id="transDate" class="form-control" required></div>
+        
+        <!-- Nâng cấp Ngày giao dịch có nút chọn nhanh -->
+        <div class="form-group">
+          <label>Ngày giao dịch</label>
+          <input type="date" id="transDate" class="form-control" required>
+          <div class="quick-dates">
+            <button type="button" class="quick-chip" onclick="setQuickDate('transDate', 0)">Hôm nay</button>
+            <button type="button" class="quick-chip" onclick="setQuickDate('transDate', -1)">Hôm qua</button>
+            <button type="button" class="quick-chip" onclick="setQuickDate('transDate', -2)">Hôm kia</button>
+          </div>
+        </div>
+
         <div class="form-group"><label>Ghi chú</label><input type="text" id="transDesc" class="form-control" placeholder="Ghi chú..."></div>
         <div class="modal-footer">
           <button type="button" id="btnCancelModal" class="btn btn-secondary">Hủy</button>
@@ -302,14 +306,15 @@
         <div class="form-group">
           <label>Hạn mức tối đa (VNĐ)</label>
           <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" required oninput="handleMoneyInput(this, 'budgetChips')">
-          <div id="budgetChips" class="quick-amounts">
-            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 500000)">500K</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 1000000)">1 Tr</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 2000000)">2 Tr</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 5000000)">5 Tr</button>
-            <button type="button" class="quick-chip" onclick="setDirectAmount('budgetLimitAmount', 'budgetChips', 10000000)">10 Tr</button>
-          </div>
+          <div id="budgetChips" class="quick-amounts"></div>
         </div>
+        
+        <!-- Chọn Tháng/Năm cho ngân sách -->
+        <div class="form-group">
+          <label>Áp dụng cho Tháng</label>
+          <input type="month" id="budgetMonth" class="form-control" required>
+        </div>
+
         <div class="modal-footer">
           <button type="button" id="btnCancelBudgetModal" class="btn btn-secondary">Hủy</button>
           <button type="submit" class="btn btn-primary">Lưu hạn mức</button>
@@ -384,7 +389,17 @@
       if (!cats.includes(category)) cats.push(category);
     }
 
-    // Xử lý thông minh: Khi gõ số, các chip gợi ý tự động nhân lên theo mệnh giá
+    // Gợi ý ngày nhanh (Hôm nay, Hôm qua, Hôm kia)
+    window.setQuickDate = function(inputId, offsetDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      document.getElementById(inputId).value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Gợi ý tiền mặt thông minh
     window.handleMoneyInput = function(input, chipsContainerId) {
       let rawVal = input.value.replace(/\D/g, '');
       const chipsContainer = document.getElementById(chipsContainerId);
@@ -405,7 +420,6 @@
       let num = parseInt(rawVal, 10);
       input.value = num.toLocaleString('vi-VN');
 
-      // Tạo gợi ý nhân theo số đang gõ
       chipsContainer.innerHTML = `
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1)">${num.toLocaleString('vi-VN')} đ</button>
         <button type="button" class="quick-chip" onclick="applyMultiplier('${input.id}', '${chipsContainerId}', ${num}, 1000)">${(num * 1000).toLocaleString('vi-VN')} đ</button>
@@ -677,6 +691,9 @@
       if (btnAddBudget) {
         btnAddBudget.addEventListener("click", () => {
           document.getElementById("budgetForm").reset();
+          const now = new Date();
+          document.getElementById("budgetMonth").value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          handleMoneyInput(document.getElementById("budgetLimitAmount"), 'budgetChips');
           document.getElementById("budgetModal").classList.add("open");
         });
       }
@@ -713,7 +730,7 @@
         document.getElementById("modalTitle").textContent = "Thêm giao dịch mới";
         document.getElementById("transId").value = "";
         document.getElementById("transAmount").value = "";
-        document.getElementById("transDate").value = new Date().toISOString().slice(0, 10);
+        setQuickDate('transDate', 0); // Mặc định chọn Hôm nay
         populateCategories("expense");
         populateAccounts();
       }
