@@ -111,6 +111,11 @@
     .chart-wrapper { position: relative; width: 100%; height: 220px; }
     .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
 
+    /* Gợi ý số tiền nhanh dạng chip */
+    .quick-amounts { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .quick-chip { background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.35rem 0.65rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .quick-chip:hover, .quick-chip:active { background: var(--accent-mint); color: #0b1517; border-color: var(--accent-mint); }
+
     /* Modal chung */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; padding: 1rem; }
     .modal.open { display: flex; }
@@ -259,7 +264,19 @@
           <label><input type="radio" name="transType" value="expense" checked> Chi tiêu</label>
           <label><input type="radio" name="transType" value="income"> Thu nhập</label>
         </div>
-        <div class="form-group"><label>Số tiền (VNĐ)</label><input type="number" id="transAmount" class="form-control" placeholder="0" required min="1"></div>
+        <div class="form-group">
+          <label>Số tiền (VNĐ)</label>
+          <input type="text" id="transAmount" class="form-control" inputmode="numeric" placeholder="0" required>
+          <div class="quick-amounts">
+            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 50000)">+50K</button>
+            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 100000)">+100K</button>
+            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 200000)">+200K</button>
+            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 500000)">+500K</button>
+            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 1000000)">+1Tr</button>
+            <button type="button" class="quick-chip" onclick="addAmount('transAmount', 2000000)">+2Tr</button>
+            <button type="button" class="quick-chip" onclick="setAmount('transAmount', 0)">Xóa</button>
+          </div>
+        </div>
         <div class="form-group"><label>Danh mục</label><select id="transCategory" class="form-control" required></select></div>
         <div class="form-group"><label>Tài khoản</label><select id="transAccount" class="form-control" required></select></div>
         <div class="form-group"><label>Ngày giao dịch</label><input type="date" id="transDate" class="form-control" required></div>
@@ -272,7 +289,7 @@
     </div>
   </div>
 
-  <!-- Modal Thêm/Sửa Hạn mức Ngân sách mới -->
+  <!-- Modal Ngân sách -->
   <div id="budgetModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -286,7 +303,14 @@
         </div>
         <div class="form-group">
           <label>Hạn mức tối đa (VNĐ)</label>
-          <input type="number" id="budgetLimitAmount" class="form-control" placeholder="0" required min="1000">
+          <input type="text" id="budgetLimitAmount" class="form-control" inputmode="numeric" placeholder="0" required>
+          <div class="quick-amounts">
+            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 500000)">+500K</button>
+            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 1000000)">+1Tr</button>
+            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 2000000)">+2Tr</button>
+            <button type="button" class="quick-chip" onclick="addAmount('budgetLimitAmount', 5000000)">+5Tr</button>
+            <button type="button" class="quick-chip" onclick="setAmount('budgetLimitAmount', 0)">Xóa</button>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" id="btnCancelBudgetModal" class="btn btn-secondary">Hủy</button>
@@ -359,11 +383,21 @@
       const limits = getSavedLimits();
       limits[category] = amount;
       localStorage.setItem("mf_budget_limits", JSON.stringify(limits));
-
       const cats = defaultData.categories.expense;
-      if (!cats.includes(category)) {
-        cats.push(category);
-      }
+      if (!cats.includes(category)) cats.push(category);
+    }
+
+    // Hàm hỗ trợ tăng số tiền nhanh khi bấm chip gợi ý
+    window.addAmount = function(elementId, value) {
+      const input = document.getElementById(elementId);
+      let current = parseInt(input.value.replace(/\D/g, '')) || 0;
+      let total = current + value;
+      input.value = total.toLocaleString('vi-VN');
+    }
+
+    window.setAmount = function(elementId, value) {
+      const input = document.getElementById(elementId);
+      input.value = value === 0 ? '' : value.toLocaleString('vi-VN');
     }
 
     const MoneyFlowStorage = (() => {
@@ -587,7 +621,6 @@
     }
 
     function setupModalEvents() {
-      // Nút Thêm giao dịch chung
       document.getElementById("btnNewTransaction").addEventListener("click", () => openModal());
       document.getElementById("btnCloseModal").addEventListener("click", () => closeModal());
       document.getElementById("btnCancelModal").addEventListener("click", () => closeModal());
@@ -596,10 +629,11 @@
       document.getElementById("transactionForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const id = document.getElementById("transId").value;
+        const rawAmount = document.getElementById("transAmount").value.replace(/\D/g, '');
         const itemData = {
           id: id || "trans_" + Date.now(),
           type: document.querySelector('input[name="transType"]:checked').value,
-          amount: Number(document.getElementById("transAmount").value),
+          amount: Number(rawAmount) || 0,
           category: document.getElementById("transCategory").value,
           account: document.getElementById("transAccount").value,
           date: document.getElementById("transDate").value,
@@ -610,7 +644,6 @@
         renderApp();
       });
 
-      // Sự kiện Nút Thêm mục Ngân sách
       const btnAddBudget = document.getElementById("btnAddBudgetCategory");
       if (btnAddBudget) {
         btnAddBudget.addEventListener("click", () => {
@@ -625,7 +658,8 @@
       document.getElementById("budgetForm").addEventListener("submit", (e) => {
         e.preventDefault();
         const name = document.getElementById("budgetCategoryName").value.trim();
-        const amount = Number(document.getElementById("budgetLimitAmount").value);
+        const rawLimit = document.getElementById("budgetLimitAmount").value.replace(/\D/g, '');
+        const amount = Number(rawLimit) || 0;
         if (name && amount > 0) {
           saveLimit(name, amount);
           document.getElementById("budgetModal").classList.remove("open");
@@ -640,7 +674,7 @@
       if (editItem) {
         document.getElementById("modalTitle").textContent = "Sửa giao dịch";
         document.getElementById("transId").value = editItem.id;
-        document.getElementById("transAmount").value = editItem.amount;
+        document.getElementById("transAmount").value = Number(editItem.amount).toLocaleString('vi-VN');
         document.getElementById("transDate").value = editItem.date;
         document.getElementById("transDesc").value = editItem.desc || "";
         form.querySelector(`input[name="transType"][value="${editItem.type}"]`).checked = true;
@@ -649,6 +683,7 @@
       } else {
         document.getElementById("modalTitle").textContent = "Thêm giao dịch mới";
         document.getElementById("transId").value = "";
+        document.getElementById("transAmount").value = "";
         document.getElementById("transDate").value = new Date().toISOString().slice(0, 10);
         populateCategories("expense");
         populateAccounts();
