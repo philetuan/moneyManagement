@@ -8,6 +8,24 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSettings();
 
   renderApp();
+
+  // Xử lý tự động ẩn Splash Video khi phát xong hoặc tối đa 4.5 giây
+  const splash = document.getElementById("splashScreen");
+  const splashVideo = document.getElementById("splashVideo");
+
+  const hideSplash = () => {
+    if (splash && !splash.classList.contains("fade-out")) {
+      splash.classList.add("fade-out");
+      setTimeout(() => splash.remove(), 600);
+    }
+  };
+
+  if (splashVideo) {
+    splashVideo.onended = hideSplash;
+    setTimeout(hideSplash, 4500); // Dự phòng nếu video không tự trigger sự kiện ended
+  } else {
+    setTimeout(hideSplash, 2500);
+  }
 });
 
 // 1. Điều hướng Tab
