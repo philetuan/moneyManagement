@@ -31,7 +31,7 @@
       --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
       --progress-bg: #262c38;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-top: env(safe-area-inset-top, 15px);
+      --safe-top: env(safe-area-inset-top, 20px);
     }
 
     [data-theme="light"] {
@@ -58,26 +58,63 @@
     .app-container { display: flex; width: 100%; }
     .sidebar { width: 250px; background-color: var(--bg-card); border-right: 1px solid var(--border-color); padding: 2rem 1.25rem; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
     @media (max-width: 767px) { .sidebar { display: none; } }
-    .logo { font-size: 1.25rem; font-weight: 700; margin-bottom: 2.5rem; color: var(--text-main); }
+    .logo { font-size: 1.4rem; font-weight: 800; margin-bottom: 2.5rem; color: var(--text-main); letter-spacing: -0.5px; }
     .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; }
     .nav-btn { display: flex; align-items: center; gap: 0.85rem; padding: 0.85rem 1rem; border: none; background: none; border-radius: 14px; cursor: pointer; font-size: 0.95rem; color: var(--text-muted); font-weight: 500; text-align: left; width: 100%; }
     .nav-btn svg { width: 20px; height: 20px; fill: currentColor; }
     .nav-btn.active { background: var(--accent-mint-gradient); color: #0b1517; font-weight: 600; }
 
-    /* Thanh điều hướng dưới tăng chiều cao và dùng icon */
+    /* Bottom Navigation Mobile */
     .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-card); border-top: 1px solid var(--border-color); padding: 0.6rem 0.5rem calc(0.6rem + var(--safe-bottom)); justify-content: space-around; align-items: center; z-index: 1000; height: 72px; }
     @media (max-width: 767px) { .mobile-nav { display: flex; } }
     .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0.4rem 1rem; flex: 1; height: 100%; }
     .mobile-nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
     .mobile-nav-btn.active { color: var(--accent-mint); }
 
-    .main-content { flex: 1; padding: 1rem; max-width: 1400px; margin: 0 auto; width: 100%; padding-top: calc(1rem + var(--safe-top)); }
+    .main-content { flex: 1; padding: 1rem; max-width: 1400px; margin: 0 auto; width: 100%; padding-top: calc(1.2rem + var(--safe-top)); }
     @media (min-width: 768px) { .main-content { margin-left: 250px; padding: 2.5rem; } }
 
-    .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .header-actions { display: flex; align-items: center; gap: 0.5rem; }
-    .theme-toggle-btn, .auth-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 0.6rem 0.9rem; border-radius: 12px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    /* Top Header nâng cấp UI chuyên nghiệp */
+    .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 0.75rem; }
+    .top-header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; flex-shrink: 0; }
     
+    .header-actions { display: flex; align-items: center; gap: 0.55rem; }
+    
+    .icon-btn { 
+      background: var(--bg-card); 
+      border: 1px solid var(--border-color); 
+      color: var(--text-main); 
+      width: 42px; 
+      height: 42px; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .icon-btn:active { transform: scale(0.95); }
+    .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+    .btn-add-trans {
+      background: var(--accent-mint-gradient);
+      color: #0b1517;
+      padding: 0 1.1rem;
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(92, 225, 230, 0.2);
+    }
+    .btn-add-trans:active { transform: scale(0.96); }
+
     .btn { padding: 0.65rem 1.1rem; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; white-space: nowrap; }
     .btn-primary { background: var(--accent-mint-gradient); color: #0b1517; }
     .btn-secondary { background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
@@ -86,9 +123,10 @@
     .view { display: none; }
     .view.active { display: block; }
 
+    /* Global Time Filter Tinh Tế */
     .global-time-filter { 
       background: var(--bg-card); 
-      padding: 0.85rem 1.1rem; 
+      padding: 0.75rem 1rem; 
       border-radius: 16px; 
       border: 1px solid var(--border-color); 
       margin-bottom: 1.25rem; 
@@ -106,11 +144,10 @@
       font-size: 0.85rem; 
       background-color: var(--bg-primary); 
       color: var(--text-main); 
-      max-width: 220px;
     }
     
     @media (max-width: 640px) {
-      .form-control { max-width: 100%; flex: 1 1 100%; }
+      .form-control { flex: 1 1 100%; }
     }
 
     .stats-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin-bottom: 1.25rem; }
@@ -120,7 +157,7 @@
     .stat-card.highlight .stat-label { color: #20413c; }
     .stat-card.highlight h3 { color: #0b1517; }
     .stat-label { font-size: 0.8rem; color: var(--text-muted); }
-    .stat-card h3 { font-size: 1.3rem; margin-top: 0.3rem; }
+    .stat-card h3 { font-size: 1.35rem; margin-top: 0.3rem; font-weight: 700; }
 
     .card-section { background: var(--bg-card); padding: 1.1rem; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
     .dashboard-layout { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
@@ -193,12 +230,17 @@
     </aside>
 
     <main class="main-content">
+      <!-- Top Header Đã Nâng Cấp -->
       <header class="top-header">
-        <h1 id="pageTitle" style="font-size: 1.4rem;">Tổng quan</h1>
+        <h1 id="pageTitle">Tổng quan</h1>
         <div class="header-actions">
-          <button id="btnThemeToggle" class="theme-toggle-btn">Sáng/Tối</button>
-          <button id="authActionBtn" class="auth-btn">Đăng nhập</button>
-          <button id="btnNewTransaction" class="btn btn-primary">+ Thêm</button>
+          <button id="btnThemeToggle" class="icon-btn" title="Đổi giao diện">
+            <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+          </button>
+          <button id="authActionBtn" class="icon-btn" title="Tài khoản">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </button>
+          <button id="btnNewTransaction" class="btn-add-trans">+ Thêm</button>
         </div>
       </header>
 
@@ -206,7 +248,7 @@
       <section id="view-dashboard" class="view active">
         <div class="global-time-filter">
           <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; white-space: nowrap;">Xem theo:</span>
-          <select id="dashTimeMode" class="form-control" style="width: 120px;" onchange="onDashTimeModeChange()">
+          <select id="dashTimeMode" class="form-control" style="width: 110px;" onchange="onDashTimeModeChange()">
             <option value="month">Tháng</option>
             <option value="day">Ngày cụ thể</option>
             <option value="year">Năm</option>
@@ -258,13 +300,13 @@
       <!-- Transactions View -->
       <section id="view-transactions" class="view">
         <div class="global-time-filter">
-          <select id="filterType" class="form-control" style="width: 130px;">
+          <select id="filterType" class="form-control" style="width: 120px;">
             <option value="all">Tất cả loại</option>
             <option value="expense">Chi tiêu</option>
             <option value="income">Thu nhập</option>
           </select>
           
-          <select id="filterCategory" class="form-control" style="width: 150px;">
+          <select id="filterCategory" class="form-control" style="width: 140px;">
             <option value="all">Tất cả danh mục</option>
           </select>
           
@@ -306,7 +348,7 @@
       </section>
     </main>
 
-    <!-- Menu Đáy di động (Dùng Icon chuyên nghiệp & Tăng chiều cao) -->
+    <!-- Menu Đáy di động -->
     <nav class="mobile-nav">
       <button class="mobile-nav-btn active" data-view="dashboard">
         <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -473,12 +515,12 @@
       const dd = `${yyyy}-${mm}-${String(now.getDate()).padStart(2, '0')}`;
 
       if (mode === 'month') {
-        wrapper.innerHTML = `<input type="month" id="dashTimeValue" class="form-control" style="width: 165px;" value="${yyyy}-${mm}" onchange="renderApp()">`;
+        wrapper.innerHTML = `<input type="month" id="dashTimeValue" class="form-control" style="width: 155px;" value="${yyyy}-${mm}" onchange="renderApp()">`;
       } else if (mode === 'day') {
-        wrapper.innerHTML = `<input type="date" id="dashTimeValue" class="form-control" style="width: 165px;" value="${dd}" onchange="renderApp()">`;
+        wrapper.innerHTML = `<input type="date" id="dashTimeValue" class="form-control" style="width: 155px;" value="${dd}" onchange="renderApp()">`;
       } else if (mode === 'year') {
         wrapper.innerHTML = `
-          <select id="dashTimeValue" class="form-control" style="width: 110px;" onchange="renderApp()">
+          <select id="dashTimeValue" class="form-control" style="width: 100px;" onchange="renderApp()">
             <option value="${yyyy}" selected>${yyyy}</option>
             <option value="${yyyy-1}">${yyyy-1}</option>
             <option value="${yyyy-2}">${yyyy-2}</option>
@@ -497,12 +539,12 @@
       const dd = `${yyyy}-${mm}-${String(now.getDate()).padStart(2, '0')}`;
 
       if (mode === 'day') {
-        wrapper.innerHTML = `<input type="date" id="filterTimeVal" class="form-control" style="width: 160px;" value="${dd}" onchange="renderApp()">`;
+        wrapper.innerHTML = `<input type="date" id="filterTimeVal" class="form-control" style="width: 150px;" value="${dd}" onchange="renderApp()">`;
       } else if (mode === 'month') {
-        wrapper.innerHTML = `<input type="month" id="filterTimeVal" class="form-control" style="width: 160px;" value="${yyyy}-${mm}" onchange="renderApp()">`;
+        wrapper.innerHTML = `<input type="month" id="filterTimeVal" class="form-control" style="width: 150px;" value="${yyyy}-${mm}" onchange="renderApp()">`;
       } else if (mode === 'year') {
         wrapper.innerHTML = `
-          <select id="filterTimeVal" class="form-control" style="width: 110px;" onchange="renderApp()">
+          <select id="filterTimeVal" class="form-control" style="width: 100px;" onchange="renderApp()">
             <option value="${yyyy}" selected>${yyyy}</option>
             <option value="${yyyy-1}">${yyyy-1}</option>
             <option value="${yyyy-2}">${yyyy-2}</option>
@@ -655,12 +697,10 @@
       const statusText = document.getElementById("userStatusText");
       const authBtn = document.getElementById("authActionBtn");
       if (currentUser) {
-        statusText.textContent = `Đã đăng nhập: ${currentUser.email}`;
-        authBtn.textContent = "Đăng xuất";
+        if (statusText) statusText.textContent = `Đã đăng nhập: ${currentUser.email}`;
         authBtn.onclick = async () => { await supabaseClient.auth.signOut(); location.reload(); };
       } else {
-        statusText.textContent = "Chưa đăng nhập. Dữ liệu đang lưu tạm trên thiết bị.";
-        authBtn.textContent = "Đăng nhập";
+        if (statusText) statusText.textContent = "Chưa đăng nhập. Dữ liệu đang lưu tạm trên thiết bị.";
         authBtn.onclick = () => openAuthModal('login');
       }
     }
@@ -730,7 +770,8 @@
     }
 
     function setupAuthEvents() {
-      document.getElementById("btnOpenAuthModal").addEventListener("click", () => openAuthModal('login'));
+      const btnOpenAuth = document.getElementById("btnOpenAuthModal");
+      if (btnOpenAuth) btnOpenAuth.addEventListener("click", () => openAuthModal('login'));
       document.getElementById("btnCloseAuth").addEventListener("click", () => document.getElementById("authModal").classList.remove("open"));
 
       document.getElementById("authForm").addEventListener("submit", async (e) => {
@@ -795,8 +836,6 @@
       btns.forEach(btn => {
         btn.addEventListener("click", () => {
           const target = btn.getAttribute("data-view");
-          document.querySelectorAll(`[data-view="${target}"]`).forEach(b => b.classList.add("active"));
-          // Sync active state for both desktop sidebar and mobile nav
           btns.forEach(b => {
             if (b.getAttribute("data-view") === target) b.classList.add("active");
             else b.classList.remove("active");
