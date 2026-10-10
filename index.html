@@ -83,7 +83,7 @@
     .view.active { display: block; }
 
     .global-time-filter, .card-section { background: var(--bg-card); padding: 1.1rem; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 1.25rem; }
-    .global-time-filter { display: flex; gap: 0.5rem; align-items: center; }
+    .global-time-filter { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
     .stats-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin-bottom: 1.25rem; }
     @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -111,11 +111,9 @@
     .chart-wrapper { position: relative; width: 100%; height: 220px; }
     .chart-wrapper canvas { width: 100% !important; height: 100% !important; }
 
-    /* Thanh gợi ý chip */
     .quick-amounts, .quick-dates { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
     .quick-chip { background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--accent-mint); padding: 0.3rem 0.55rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
-    /* Modal chung */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 2000; padding: 1rem; overflow-y: auto; }
     .modal.open { display: flex; }
     .modal-content { background: var(--bg-card); padding: 1.25rem; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); max-height: 90vh; overflow-y: auto; }
@@ -160,14 +158,16 @@
 
       <!-- Dashboard View -->
       <section id="view-dashboard" class="view active">
+        <!-- Bộ lọc thời gian tổng quan thông minh -->
         <div class="global-time-filter">
-          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Thời gian:</span>
-          <select id="dashTimeMode" class="form-control" style="width: auto;">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Xem theo:</span>
+          <select id="dashTimeMode" class="form-control" style="width: 110px;" onchange="onDashTimeModeChange()">
             <option value="month">Tháng</option>
-            <option value="day">Ngày</option>
+            <option value="day">Ngày cụ thể</option>
             <option value="year">Năm</option>
+            <option value="all">Toàn bộ</option>
           </select>
-          <div id="dashTimeInputContainer"></div>
+          <div id="dashTimeInputWrapper" style="flex: 1; min-width: 150px;"></div>
         </div>
 
         <div class="stats-grid">
@@ -271,7 +271,6 @@
         <div class="form-group"><label>Danh mục</label><select id="transCategory" class="form-control" required></select></div>
         <div class="form-group"><label>Tài khoản</label><select id="transAccount" class="form-control" required></select></div>
         
-        <!-- Nâng cấp Ngày giao dịch có nút chọn nhanh -->
         <div class="form-group">
           <label>Ngày giao dịch</label>
           <input type="date" id="transDate" class="form-control" required>
@@ -309,7 +308,6 @@
           <div id="budgetChips" class="quick-amounts"></div>
         </div>
         
-        <!-- Chọn Tháng/Năm cho ngân sách -->
         <div class="form-group">
           <label>Áp dụng cho Tháng</label>
           <input type="month" id="budgetMonth" class="form-control" required>
@@ -389,7 +387,36 @@
       if (!cats.includes(category)) cats.push(category);
     }
 
-    // Gợi ý ngày nhanh (Hôm nay, Hôm qua, Hôm kia)
+    // Xử lý chuyển đổi giao diện bộ lọc thời gian ở Tổng quan
+    function initDashTimeFilter() {
+      const wrapper = document.getElementById("dashTimeInputWrapper");
+      const mode = document.getElementById("dashTimeMode").value;
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = `${yyyy}-${mm}-${String(now.getDate()).padStart(2, '0')}`;
+
+      if (mode === 'month') {
+        wrapper.innerHTML = `<input type="month" id="dashTimeValue" class="form-control" value="${yyyy}-${mm}" onchange="renderApp()">`;
+      } else if (mode === 'day') {
+        wrapper.innerHTML = `<input type="date" id="dashTimeValue" class="form-control" value="${dd}" onchange="renderApp()">`;
+      } else if (mode === 'year') {
+        wrapper.innerHTML = `
+          <select id="dashTimeValue" class="form-control" onchange="renderApp()">
+            <option value="${yyyy}" selected>${yyyy}</option>
+            <option value="${yyyy-1}">${yyyy-1}</option>
+            <option value="${yyyy-2}">${yyyy-2}</option>
+          </select>`;
+      } else {
+        wrapper.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted);">Hiển thị toàn bộ dữ liệu</span>`;
+      }
+    }
+
+    window.onDashTimeModeChange = function() {
+      initDashTimeFilter();
+      renderApp();
+    }
+
     window.setQuickDate = function(inputId, offsetDays) {
       const d = new Date();
       d.setDate(d.getDate() + offsetDays);
@@ -399,7 +426,6 @@
       document.getElementById(inputId).value = `${yyyy}-${mm}-${dd}`;
     }
 
-    // Gợi ý tiền mặt thông minh
     window.handleMoneyInput = function(input, chipsContainerId) {
       let rawVal = input.value.replace(/\D/g, '');
       const chipsContainer = document.getElementById(chipsContainerId);
@@ -501,6 +527,7 @@
         renderApp();
       });
 
+      initDashTimeFilter();
       setupTheme();
       setupNavigation();
       setupModalEvents();
@@ -730,7 +757,7 @@
         document.getElementById("modalTitle").textContent = "Thêm giao dịch mới";
         document.getElementById("transId").value = "";
         document.getElementById("transAmount").value = "";
-        setQuickDate('transDate', 0); // Mặc định chọn Hôm nay
+        setQuickDate('transDate', 0);
         populateCategories("expense");
         populateAccounts();
       }
@@ -760,14 +787,26 @@
       const transactions = await MoneyFlowStorage.fetchTransactions();
       const fmt = num => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
 
+      // Lọc dữ liệu hiển thị trên Dashboard theo bộ lọc thời gian tùy chọn
+      const timeMode = document.getElementById("dashTimeMode").value;
+      const timeValElem = document.getElementById("dashTimeValue");
+      const timeVal = timeValElem ? timeValElem.value : "";
+
+      const filteredDashTrans = transactions.filter(t => {
+        if (timeMode === 'month' && timeVal) return t.date.startsWith(timeVal);
+        if (timeMode === 'day' && timeVal) return t.date === timeVal;
+        if (timeMode === 'year' && timeVal) return t.date.startsWith(timeVal);
+        return true; // 'all'
+      });
+
       let income = 0, expense = 0;
-      transactions.forEach(t => { if (t.type === "income") income += t.amount; if (t.type === "expense") expense += t.amount; });
+      filteredDashTrans.forEach(t => { if (t.type === "income") income += t.amount; if (t.type === "expense") expense += t.amount; });
 
       document.getElementById("dashBalance").textContent = fmt(income - expense);
       document.getElementById("dashIncome").textContent = fmt(income);
       document.getElementById("dashExpense").textContent = fmt(expense);
 
-      document.getElementById("recentList").innerHTML = transactions.slice(0, 5).map(t => renderTransItem(t, fmt)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không có giao dịch</p>';
+      document.getElementById("recentList").innerHTML = filteredDashTrans.slice(0, 5).map(t => renderTransItem(t, fmt)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không có giao dịch trong khoảng thời gian này</p>';
       
       const typeF = document.getElementById("filterType").value;
       const catF = document.getElementById("filterCategory").value;
@@ -783,7 +822,7 @@
       document.getElementById("allTransactionsList").innerHTML = filteredAll.map(t => renderTransItem(t, fmt, true)).join("") || '<p style="color:var(--text-muted); text-align:center;">Không tìm thấy giao dịch</p>';
 
       renderBudget(transactions, fmt);
-      renderCharts(transactions);
+      renderCharts(filteredDashTrans);
     }
 
     function renderBudget(transactions, fmt) {
