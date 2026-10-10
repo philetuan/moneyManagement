@@ -121,7 +121,6 @@
     .form-group label { display: block; font-size: 0.8rem; margin-bottom: 0.35rem; color: var(--text-muted); }
     .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
 
-    /* Tab lựa chọn trong Auth Modal */
     .auth-tabs { display: flex; background: var(--bg-primary); border-radius: 10px; padding: 4px; margin-bottom: 1.25rem; }
     .auth-tab { flex: 1; text-align: center; padding: 0.5rem; background: none; border: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .auth-tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
@@ -273,7 +272,31 @@
     </div>
   </div>
 
-  <!-- Modal Đăng nhập / Đăng ký Nâng cấp -->
+  <!-- Modal Thêm/Sửa Hạn mức Ngân sách mới -->
+  <div id="budgetModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem;">Hạn mức Ngân sách</h3>
+        <button id="btnCloseBudgetModal" class="close-btn">✕</button>
+      </div>
+      <form id="budgetForm">
+        <div class="form-group">
+          <label>Tên danh mục chi tiêu</label>
+          <input type="text" id="budgetCategoryName" class="form-control" placeholder="Ví dụ: Du lịch, Học tập..." required>
+        </div>
+        <div class="form-group">
+          <label>Hạn mức tối đa (VNĐ)</label>
+          <input type="number" id="budgetLimitAmount" class="form-control" placeholder="0" required min="1000">
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnCancelBudgetModal" class="btn btn-secondary">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu hạn mức</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Đăng nhập / Đăng ký -->
   <div id="authModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -319,15 +342,31 @@
 
     let currentUser = null;
     let transactionsCache = [];
-    let currentAuthMode = 'login'; // 'login' hoặc 'register'
+    let currentAuthMode = 'login';
+
+    const defaultData = {
+      categories: { expense: ["Ăn uống", "Mua sắm", "Di chuyển", "Giải trí", "Sức khỏe", "Khác"], income: ["Lương", "Thưởng", "Đầu tư", "Khác"] },
+      accounts: ["Tiền mặt", "Ngân hàng", "Ví điện tử"],
+      limits: { "Ăn uống": 3000000, "Mua sắm": 2000000, "Di chuyển": 1000000, "Giải trí": 1500000, "Sức khỏe": 2000000, "Khác": 1000000 }
+    };
+
+    function getSavedLimits() {
+      const local = localStorage.getItem("mf_budget_limits");
+      return local ? JSON.parse(local) : defaultData.limits;
+    }
+
+    function saveLimit(category, amount) {
+      const limits = getSavedLimits();
+      limits[category] = amount;
+      localStorage.setItem("mf_budget_limits", JSON.stringify(limits));
+
+      const cats = defaultData.categories.expense;
+      if (!cats.includes(category)) {
+        cats.push(category);
+      }
+    }
 
     const MoneyFlowStorage = (() => {
-      const defaultData = {
-        categories: { expense: ["Ăn uống", "Mua sắm", "Di chuyển", "Giải trí", "Sức khỏe", "Khác"], income: ["Lương", "Thưởng", "Đầu tư", "Khác"] },
-        accounts: ["Tiền mặt", "Ngân hàng", "Ví điện tử"],
-        limits: { "Ăn uống": 3000000, "Mua sắm": 2000000, "Di chuyển": 1000000, "Giải trí": 1500000, "Sức khỏe": 2000000, "Khác": 1000000 }
-      };
-
       async function fetchTransactions() {
         if (currentUser) {
           const { data, error } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
@@ -366,7 +405,7 @@
         fetchTransactions, saveTransaction, deleteTransaction,
         getCategories: () => defaultData.categories,
         accounts: defaultData.accounts,
-        getLimits: () => defaultData.limits
+        getLimits: getSavedLimits
       };
     })();
 
@@ -460,9 +499,7 @@
         return;
       }
 
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.href,
-      });
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
 
       if (error) {
         errBox.textContent = error.message;
@@ -483,28 +520,37 @@
         const password = document.getElementById("authPassword").value;
         const errBox = document.getElementById("authErrorBox");
         const succBox = document.getElementById("authSuccessBox");
+        const submitBtn = document.getElementById("authSubmitBtn");
 
         errBox.style.display = "none";
         succBox.style.display = "none";
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Đang xử lý...";
 
-        if (currentAuthMode === 'login') {
-          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) {
-            errBox.textContent = "Đăng nhập thất bại: " + error.message;
-            errBox.style.display = "block";
-          } else {
+        try {
+          if (currentAuthMode === 'login') {
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
             document.getElementById("authModal").classList.remove("open");
             location.reload();
-          }
-        } else {
-          const { error } = await supabaseClient.auth.signUp({ email, password });
-          if (error) {
-            errBox.textContent = "Đăng ký thất bại: " + error.message;
-            errBox.style.display = "block";
           } else {
-            succBox.textContent = "Đăng ký thành công! Hãy kiểm tra hộp thư email (hoặc đăng nhập ngay nếu không yêu cầu xác thực).";
-            succBox.style.display = "block";
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) throw error;
+            if (data.user) {
+              succBox.textContent = "Đăng ký thành công! Đang tự động đăng nhập...";
+              succBox.style.display = "block";
+              setTimeout(() => {
+                document.getElementById("authModal").classList.remove("open");
+                location.reload();
+              }, 1200);
+            }
           }
+        } catch (err) {
+          errBox.textContent = "Lỗi: " + (err.message || "Thao tác không thành công");
+          errBox.style.display = "block";
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = currentAuthMode === 'login' ? "Đăng nhập" : "Đăng ký tài khoản";
         }
       });
     }
@@ -541,6 +587,7 @@
     }
 
     function setupModalEvents() {
+      // Nút Thêm giao dịch chung
       document.getElementById("btnNewTransaction").addEventListener("click", () => openModal());
       document.getElementById("btnCloseModal").addEventListener("click", () => closeModal());
       document.getElementById("btnCancelModal").addEventListener("click", () => closeModal());
@@ -561,6 +608,29 @@
         await MoneyFlowStorage.saveTransaction(itemData);
         closeModal();
         renderApp();
+      });
+
+      // Sự kiện Nút Thêm mục Ngân sách
+      const btnAddBudget = document.getElementById("btnAddBudgetCategory");
+      if (btnAddBudget) {
+        btnAddBudget.addEventListener("click", () => {
+          document.getElementById("budgetForm").reset();
+          document.getElementById("budgetModal").classList.add("open");
+        });
+      }
+
+      document.getElementById("btnCloseBudgetModal").addEventListener("click", () => document.getElementById("budgetModal").classList.remove("open"));
+      document.getElementById("btnCancelBudgetModal").addEventListener("click", () => document.getElementById("budgetModal").classList.remove("open"));
+
+      document.getElementById("budgetForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("budgetCategoryName").value.trim();
+        const amount = Number(document.getElementById("budgetLimitAmount").value);
+        if (name && amount > 0) {
+          saveLimit(name, amount);
+          document.getElementById("budgetModal").classList.remove("open");
+          renderApp();
+        }
       });
     }
 
@@ -587,10 +657,12 @@
     }
 
     function closeModal() { document.getElementById("transactionModal").classList.remove("open"); }
+    
     function populateCategories(type, selected = null) {
       const cats = MoneyFlowStorage.getCategories()[type] || [];
       document.getElementById("transCategory").innerHTML = cats.map(c => `<option value="${c}" ${c === selected ? "selected" : ""}>${c}</option>`).join("");
     }
+    
     function populateAccounts(selected = null) {
       document.getElementById("transAccount").innerHTML = MoneyFlowStorage.accounts.map(a => `<option value="${a}" ${a === selected ? "selected" : ""}>${a}</option>`).join("");
     }
@@ -633,8 +705,8 @@
     }
 
     function renderBudget(transactions, fmt) {
-      const cats = MoneyFlowStorage.getCategories().expense || [];
       const limits = MoneyFlowStorage.getLimits();
+      const cats = Object.keys(limits);
       const now = new Date();
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const monthExpenses = transactions.filter(t => t.type === "expense" && t.date.startsWith(currentMonth));
